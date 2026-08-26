@@ -1,0 +1,92 @@
+Region: us-east-1
+Image:
+  Os: ubuntu2204
+SharedStorage:
+  - Name: scratch
+    StorageType: FsxLustre
+    MountDir: /workspace
+    FsxLustreSettings:
+      StorageCapacity: 2400
+      DeploymentType: SCRATCH_1
+      DeletionPolicy: Delete
+
+  - Name: applications
+    StorageType: Efs
+    MountDir: /sw
+    EfsSettings:
+       Encrypted: false
+       PerformanceMode: generalPurpose
+       ThroughputMode: bursting
+       DeletionPolicy: Retain
+HeadNode:
+  InstanceType: c5n.9xlarge
+  Ssh:
+    KeyName: CFD_cluster_admin01
+  Networking:
+    SubnetId: subnet-0906aa3b132d03b70
+  LocalStorage:
+    RootVolume:
+      Size: 400
+  Iam:
+    AdditionalIamPolicies:
+      - Policy: arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+    S3Access:
+      - BucketName: on-node-test-scripts
+        EnableWriteAccess: false
+  CustomActions:
+    OnNodeConfigured:
+      Script: s3://on-node-test-scripts/custom-node-settings.sh
+Scheduling:
+  Scheduler: slurm
+  ScalingStrategy: best-effort
+  SlurmSettings:
+    QueueUpdateStrategy: DRAIN
+  SlurmQueues:
+    - Name: cpuq
+      JobExclusiveAllocation: true
+      CapacityType: SPOT
+      ComputeResources:
+        - Name: amd
+          MinCount: 0
+          MaxCount: 5
+          DisableSimultaneousMultithreading: True
+          Instances:
+            - InstanceType: c7a.48xlarge
+          SpotPrice: 12.00
+          Efa:
+            Enabled: True
+      Networking:
+        PlacementGroup:
+            Enabled: True
+        SubnetIds:
+          - subnet-034cf9f9d49f6b156
+      Iam:
+        AdditionalIamPolicies:
+          - Policy: arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+        S3Access:
+          - BucketName: on-node-test-scripts
+            EnableWriteAccess: false
+      CustomActions:
+        OnNodeConfigured:
+          Script: s3://on-node-test-scripts/custom-node-settings.sh
+    - Name: mgmt
+      ComputeResources:
+        - Name: t3med
+          MinCount: 0
+          MaxCount: 2
+          Instances:
+            - InstanceType: t3.medium
+      Networking:
+        PlacementGroup:
+            Enabled: False
+        SubnetIds:
+          - subnet-034cf9f9d49f6b156
+      Iam:
+        AdditionalIamPolicies:
+          - Policy: arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+        S3Access:
+          - BucketName: on-node-test-scripts
+            EnableWriteAccess: false
+      CustomActions:
+        OnNodeConfigured:
+          Script: s3://on-node-test-scripts/custom-node-settings.sh
