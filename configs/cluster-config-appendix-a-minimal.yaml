@@ -1,0 +1,36 @@
+# Minimal example: single EBS-backed shared volume, on-demand-free
+# (spot) small queue. Good starting point for a smoke test.
+
+Region: <REGION>
+Image:
+  Os: ubuntu2204
+
+SharedStorage:
+  - MountDir: /apps
+    Name: applications
+    StorageType: Ebs
+
+HeadNode:
+  InstanceType: c4.xlarge
+  Networking:
+    SubnetId: <HEAD-NODE-SUBNET-ID>
+  Ssh:
+    KeyName: <YOUR-KEY-NAME>
+
+Scheduling:
+  Scheduler: slurm
+  SlurmQueues:
+    - Name: workq
+      CapacityType: SPOT
+      ComputeResources:
+        - Name: haswell
+          Instances:
+            - InstanceType: c4.xlarge
+          MinCount: 0
+          MaxCount: 4
+          DisableSimultaneousMultithreading: true
+      Networking:
+        SubnetIds:
+          - <COMPUTE-SUBNET-ID>
+        PlacementGroup:
+          Enabled: true

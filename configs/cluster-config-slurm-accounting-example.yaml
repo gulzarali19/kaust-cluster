@@ -1,0 +1,45 @@
+# Example: cluster config wired up to an RDS-backed SLURM accounting
+# database created via a separate CloudFormation stack.
+#
+# Notice PasswordSecretArn — never put the DB password directly in
+# this file. This is the pattern to copy for every other secret in
+# this repo's configs (license server, AD, etc.) as they get moved
+# off plaintext.
+
+Region: <REGION>
+Image:
+  Os: ubuntu2204
+
+HeadNode:
+  InstanceType: t2.medium
+  Networking:
+    SubnetId: <HEAD-NODE-SUBNET-ID>
+    AdditionalSecurityGroups:
+      - <SG-ID-1>
+      - <SG-ID-2>
+      - <SG-ID-3>
+  Ssh:
+    KeyName: <YOUR-KEY-NAME>
+
+Scheduling:
+  Scheduler: slurm
+  SlurmSettings:
+    Database:
+      Uri: <DatabaseHost from SLURM-DB CFN stack outputs>
+      UserName: <DatabaseAdminUser from stack outputs>
+      PasswordSecretArn: <DatabaseSecretArn from stack outputs>
+  SlurmQueues:
+    - Name: queue1
+      ComputeResources:
+        - Name: t2medium
+          Instances:
+            - InstanceType: t2.medium
+          MinCount: 0
+          MaxCount: 4
+      Networking:
+        SubnetIds:
+          - <COMPUTE-SUBNET-ID>
+        AdditionalSecurityGroups:
+          - <SG-ID-1>
+          - <SG-ID-2>
+          - <SG-ID-3>

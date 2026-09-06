@@ -1,0 +1,39 @@
+#%Module 1.0 -*- tcl -*-
+#  ANSYS ICEMCFD Module
+
+set desc        "This modulefile sets up environment to use Ansys Fluid Structures"
+set whatis      "Ansys Fluent is a general purpose CFD software for modelling fluid flow http://www.ansys.com"
+set onload      ""
+set app         ansys
+set ver         2024R2.02
+
+#------------------------------------------------
+proc ModulesHelp { } {
+  global desc whatis
+  puts stderr "$desc"
+  puts stderr "$whatis"
+}
+
+module-whatis $whatis
+
+if { [ string length $onload ] > 0 } {
+  if [ module-info mode load ] {
+    puts stderr "$onload"
+  }
+}
+
+# NOTE: license server referenced by IP below. Update this (and the
+# server itself, see docs/04-license-server-flexlm.md) to a stable
+# DNS name to avoid having to edit this file if the instance ever
+# changes IP.
+set prefix /sw/ansys_install
+
+setenv ANSYS_ROOT $prefix
+setenv ENSIGHT10_LM ansys
+setenv AWPROOTDIR $prefix/v242
+setenv ANSYSLI_SERVERS 2325@ip-10-0-26-35.ec2.internal
+setenv ANSYSLMD_LICENSE_FILE 1055@ip-10-0-26-35.ec2.internal
+
+prepend-path    PATH                    $prefix/shared_files/licensing/lic_admin/
+prepend-path    PATH                    $prefix/v242/licensingclient/linx64
+prepend-path    PATH                    $prefix/v242/fluent/bin

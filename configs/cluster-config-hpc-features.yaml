@@ -1,0 +1,82 @@
+# Example ParallelCluster config with shared storage, tuned head
+# node, and a spot compute queue for CFD workloads.
+#
+# Placeholders to replace before use:
+#   <REGION>, <HEAD-NODE-SUBNET-ID>, <COMPUTE-SUBNET-ID>,
+#   <YOUR-KEY-NAME>, <YOUR-S3-BUCKET>
+
+Region: <REGION>
+Image:
+  Os: ubuntu2404
+
+# --------------------------------------
+# 1. SHARED STORAGE (Persistent Applications + High-Speed Scratch)
+# --------------------------------------
+SharedStorage:
+  - Name: scratch
+    StorageType: FsxLustre
+    MountDir: /workspace
+    FsxLustreSettings:
+      StorageCapacity: 1200          # GB, parallel scratch disk for CFD output
+      DeploymentType: SCRATCH_1
+      DeletionPolicy: Delete
+  - Name: applications
+    StorageType: Efs
+    MountDir: /sw
+    EfsSettings:
+      Encrypted: false
+      PerformanceMode: generalPurpose
+      ThroughputMode: bursting
+      DeletionPolicy: Retain         # software remains safe if cluster is deleted
+
+# ------------------------------------------
+# 2. HEAD NODE CONFIGURATION
+# ------------------------------------------
+HeadNode:
+  InstanceType: c7i-flex.large
+  Networking:
+    SubnetId: <HEAD-NODE-SUBNET-ID>
+  Ssh:
+    KeyName: <YOUR-KEY-NAME>
+  LocalStorage:
+    RootVolume:
+      Size: 100                     # expanded disk space for software builds
+  Iam:
+    AdditionalIamPolicies:
+      - Policy: arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+    S3Access:
+      - BucketName: <YOUR-S3-BUCKET>
+        EnableWriteAccess: false
+  CustomActions:
+    OnNodeConfigured:
+      Script: s3://<YOUR-S3-BUCKET>/custom-node-settings.sh
+
+# --------------------------------------
+# 3. SCHEDULER & COMPUTE QUEUE CONFIGURATION
+# --------------------------------------
+Scheduling:
+  Scheduler: slurm
+  SlurmQueues:
+    - Name: queue1
+      JobExclusiveAllocation: true   # ensures 1 job gets 100% of a compute node
+      CapacityType: SPOT
+      ComputeResources:
+        - Name: c7iflexlarge
+          Instances:
+            - InstanceType: c7i-flex.large
+          MinCount: 0
+          MaxCount: 2
+          DisableSimultaneousMultithreading: true  # disables hyperthreading for MPI
+          Efa:
+            Enabled: false                          # enable if using EFA-capable + MPI
+      Networking:
+        PlacementGroup:
+          Enabled: false                             # co-locates instances in same rack
+        SubnetIds:
+          - <COMPUTE-SUBNET-ID>
+      Iam:
+        AdditionalIamPolicies:
+          - Policy: arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+      CustomActions:
+        OnNodeConfigured:
+          Script: s3://<YOUR-S3-BUCKET>/custom-node-settings.sh
