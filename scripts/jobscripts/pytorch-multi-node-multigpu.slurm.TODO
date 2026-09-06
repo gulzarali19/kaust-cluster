@@ -1,0 +1,31 @@
+# NOT YET WRITTEN.
+#
+# The source document's table of contents listed a "PyTorch
+# multi-node multiGPU" section, but its content was missing from the
+# doc. This file is a placeholder so the gap is visible in the repo
+# rather than silently absent.
+#
+# A reasonable starting point, following the same node-list-parsing
+# pattern used in jupyterlab.slurm:
+#
+#   #!/bin/bash
+#   #SBATCH --nodes=2
+#   #SBATCH --gpus-per-node=8
+#   #SBATCH --ntasks-per-node=1
+#   #SBATCH -c 48
+#
+#   nodes=$(scontrol show hostnames "$SLURM_JOB_NODELIST")
+#   nodes_array=($nodes)
+#   head_node=${nodes_array[0]}
+#   head_node_ip=$(srun -N1 -n1 -w "$head_node" hostname -I | awk '{print $1}')
+#
+#   srun torchrun \
+#     --nnodes=$SLURM_NNODES \
+#     --nproc-per-node=8 \
+#     --rdzv_id=$SLURM_JOB_ID \
+#     --rdzv_backend=c10d \
+#     --rdzv_endpoint="${head_node_ip}:29500" \
+#     train.py ...
+#
+# Verify against your actual training script and cluster network
+# config (EFA/placement group) before relying on this.
