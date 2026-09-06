@@ -5,10 +5,6 @@ AWS ParallelCluster (SLURM) HPC cluster for CFD workloads (OpenFOAM,
 ANSYS Fluent) and GPU/ML workloads (PyTorch), including a FlexLM/ANSYS
 license server.
 
-This repo was assembled from the team's internal setup docs. See
-[`GAPS_AND_RECOMMENDATIONS.md`](GAPS_AND_RECOMMENDATIONS.md) for a
-review of what's missing or worth hardening before this goes further.
-
 ## Repo structure
 
 ```
