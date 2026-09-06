@@ -1,6 +1,3 @@
-# kaust-cluster
-Documents for cluster creation
-
 # CFD Cluster on AWS
 
 Runbooks, configs, and job scripts for standing up and operating an
